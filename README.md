@@ -11,3 +11,8 @@ My first Git-Hub repository
 * Adding Home Page
 * Hosting index.html on GitHub Pages
 * Modifying Readme file to include homepage link
+
+### Topics
+* GitHub Codespaces
+* GitHub Pages
+* GitHub Actions
