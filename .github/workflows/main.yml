@@ -1,1 +1,56 @@
-#Team work on push
+# Team work on push
+
+# Begins with the workflow, specify the trigget that activates the workflow, specify the branch
+
+name: Team main workflow
+on:
+  push:
+    branches:
+      - main
+
+# Define the jobs (A collection of steps that are executed on a virtual machine runner)
+# Each job run in a specified environment like ubuntu-latest/ windows-latest
+# The below job has 4 steps
+#       1. Clone the repository to the Virtual machine ubuntu-latest runner
+#       2. Update index.html page with a log formatted in a P tag
+#       3. Update the ReadMe file with log text
+#       4. Push changes of index.html and ReadMe files back to the main repository
+# The "uses" key work indicate a pre-built GitHub action
+
+jobs:
+  update_html_and_readme:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step1: Checkout repository (Cloning the repository)
+      - name: Checkout repository
+        uses: actions/checkout@v3           #This ensure that the workflow has access to the repository files for sub-sequent operations like updates or builds
+    
+      # Step2: Update index.html           # The "run" keyword executes a shell script directly on the runner. The script checks if the person trigerring the script is the team leader via the user name. If it is true, it uses the 'sed' command with a timestamp before the body ending tag in the index.html. The purpose of the sed command is to track the updates to the file associating the changes with the team member making the push event, in this example the team leader.
+      - name: Update html
+        run: 
+          # Team leader update index.html
+          if [ "${{ github.actor }}" == "UpekshaNAD" ]; then
+            sed -i '/<\/body>/i <p>Updated by Team leader on '"$(date)"'</p>' index.html
+          fi
+      
+      # Step3: Update ReadMe      ReadMe fille be appended with the log which shows the user and the timestamp of the commit and also the commit reference. This helps to maitain the tranparency and accountability with the details of who did what and when
+      - name: Update ReadMe
+        run:
+          echo "### Updated by ${{ github.actor }} on $(date '+%Y-%m-%d %H:%M:%S') [Commit: $(git rev-parse --short HEAD)]" >> README.md
+
+      # Step4: Commit the changes back to the repository     1) Configure gits user identity for this session, 2) Stage all the changes to commit, 3) Create a commit with a descriptive message that mentions the GitHub user obtained dynamically from github.actor, 4) Update the remote URL to the repository including an authentication token, 5)Push the changes back to the main repository
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github actions"
+          git config --global user.email "github actions@users.noreply.github.com"
+          git add .
+          git commit -m "Workflow: Updated HTML and README for ${{ github.actor }}"
+          git remote set-url origin https://x-access-token:${{ secret.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git push
+        env:      #Environment command provides GITHUB_TOKEN environment variable
+          GITHUB_TOKEN: ${{ secret.GITHUB_TOKEN }}
+
+
+          
+
